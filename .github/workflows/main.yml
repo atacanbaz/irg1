@@ -1,0 +1,38 @@
+name: iMLP Prediction
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Install iMLP tool
+        run: |
+          dotnet new tool-manifest || true
+          dotnet tool install imlp
+
+      - name: Create FASTA file
+        run: |
+          cat << 'EOF' > IRG1.fasta
+          >IRG1
+          MMLKSITESFATAIHGLKVGHLTDRVIQRSKRMILDTLGAGFLGTTTEVFHIASQYSKIYSSNISSTVWGQPDIRLPPTYAAFVNGVAIHSMDFDDTWHPATHPSGAVLPVLTALAEALPRSPKFSGLDLLLAFNVGIEVQGRLLHFAKEANDMPKRFHPPSVVGTLGSAAAASKFLGLSSTKCREALAIAVSHAGAPMANAATQTKPLHIGNAAKHGIEAAFLAMLGLQGNKQVLDLEAGFGAFYANYSPKVLPSIASYSWLLDQQDVAFKRFPAHLSTHWVADAAASVRKHLVAERALLPTDYIKRIVLRIPNVQYVNRPFPVSEHEARHSFQYVACAMLLDGGITVPSFHECQINRPQVRELLSKVELEYPPDNLPSFNILYCEISVTLKDGATFTDRSDTFYGHWRKPLSQEDLEEKFRANASKMLSWDTVESLIKIVKNLEDLEDCSVLTTLLKGPSPPEVASNSPACNNSITNLS
+          EOF
+
+      - name: Run iMLP prediction
+        run: |
+          dotnet imlp --inputfile IRG1.fasta --outputfile IRG1resultsata.tsv --model nonplant
+
+      - name: Upload prediction results
+        uses: actions/upload-artifact@v3
+        with:
+          name: IRG1-predictions
+          path: IRG1resultsata.tsv
